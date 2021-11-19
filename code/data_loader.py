@@ -15,16 +15,13 @@ class Loader_list(Dataset):
         return len(self.lst)
 
 class Block:
-    #因为涉及到imputation，非train data中的UI也要训练，所以有这个block函数，主要是User_loader和Item_loader可以生成所有可选的user和item的list
     def __init__(self, mat, u_batch_size = 1000, i_batch_size = 1000, device = 'cuda'): 
         self.mat = mat
         self.n_users, self.n_items = self.mat.shape
         self.User_loader = DataLoader(Loader_list(torch.arange(self.n_users).to(device)), batch_size=u_batch_size, shuffle=True, num_workers=0)
         self.Item_loader = DataLoader(Loader_list(torch.arange(self.n_items).to(device)), batch_size=i_batch_size, shuffle=True, num_workers=0)
     
-    def get_batch(self, batch_user, batch_item, device = 'cuda'): #这是随机取出来的userid和itemid，有没有交互都有可能
-        #因为是sparce格式，前两行先找出属于这个batch的所有横(U)纵(I)坐标，第三行是筛选一下属于这个batch的U/I pair
-        #Note因为是用_indices()这个函数，所以每个user和item位置是对应的，所以采集不到label！=1的U/I pair
+    def get_batch(self, batch_user, batch_item, device = 'cuda'):
         index_row = np.isin(self.mat._indices()[0].cpu().numpy(), batch_user.cpu().numpy())
         index_col = np.isin(self.mat._indices()[1].cpu().numpy(), batch_item.cpu().numpy())
         index = torch.tensor(np.where(index_row * index_col)[0]).to(device)
@@ -47,7 +44,6 @@ class NoLabelBlock:
                 if self.mat[index_row[i], index_col[i]] == 0:
                     Pool_u.append(index_row[i])
                     Pool_i.append(index_col[i])
-        #防止不够用，再跑一遍
         for i in range(len(index_row)):
             if len(Pool_u) >= self.TrainSize * times:
                 break
@@ -65,9 +61,7 @@ class NoLabelBlock:
         return self.u_no[index].to(device), self.i_no[index].to(device)
 
 
-    def get_batch_Wneg(self, batch_user, batch_item, neg_item_all, neg_users, device = 'cuda'): #这是随机取出来的userid和itemid，有没有交互都有可能
-        #因为是sparce格式，前两行先找出属于这个batch的所有横(U)纵(I)坐标，第三行是筛选一下属于这个batch的U/I pair
-        #Note因为是用_indices()这个函数，所以每个user和item位置是对应的，所以采集不到label！=1的U/I pair
+    def get_batch_Wneg(self, batch_user, batch_item, neg_item_all, neg_users, device = 'cuda'):
         index_row = np.isin(self.mat._indices()[0].cpu().numpy(), batch_user.cpu().numpy())
         index_col = np.isin(self.mat._indices()[1].cpu().numpy(), batch_item.cpu().numpy())
         index = torch.tensor(np.where(index_row * index_col)[0]).to(device)
