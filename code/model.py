@@ -47,9 +47,6 @@ class MetaModule(nn.Module):
         if source_params is not None:
             for tgt, src in zip(self.named_params(self), source_params):
                 name_t, param_t = tgt
-                # name_s, param_s = src
-                # grad = param_s.grad
-                # name_s, param_s = src
                 grad = src
                 if first_order:
                     grad = to_var(grad.detach().data)
@@ -115,7 +112,6 @@ class MetaMF(MetaModule):
         self.item_latent = MetaEmbed(n_item, dim)
         self.user_bias = MetaEmbed(n_user, 1)
         self.item_bias = MetaEmbed(n_item, 1)
-        #用register_buffer的形式把模型参数存下来，可以让这部分参数不参与更新
         self.dropout_p = dropout
         self.dropout = nn.Dropout(p=self.dropout_p)
         if init is not None:
@@ -342,7 +338,6 @@ class MF_MSE(MetaModule):
         self.item_latent = nn.Embedding(n_item, dim)
         self.user_bias = nn.Embedding(n_user, 1)
         self.item_bias = nn.Embedding(n_item, 1)
-        #用register_buffer的形式把模型参数存下来，可以让这部分参数不参与更新
         self.dropout_p = dropout
         self.dropout = nn.Dropout(p=self.dropout_p)
         if init is not None:
