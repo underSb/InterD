@@ -1,9 +1,4 @@
 def calc(n,m,ttuser,ttitem,pre,ttrating,mode,bias,atk=5):
-    #n:参与test的userID的最大值，m:参与test的itemID的最大值
-    #ttuser：参与test的userID,ttitem：参与test的itemID
-    #pre：prediciton_rating
-    #ttrating：GrounTruth
-    #atk： 算ndcg和recall和pre 的at K
     user=ttuser.cpu().detach().numpy()
     item=ttitem.cpu().detach().numpy()
     pre=pre.cpu().detach().numpy()
@@ -30,7 +25,7 @@ def calc(n,m,ttuser,ttitem,pre,ttrating,mode,bias,atk=5):
     positem=np.array(positem)
     preall=np.ones((n,m))*(-99999999)
     preall[user,item]=pre
-    id=np.argsort(preall,axis=1,kind='quicksort',order=None)#跟topk类似，输出下标，每行都是得分从大到小排item的下标.行是user列是item
+    id=np.argsort(preall,axis=1,kind='quicksort',order=None)
     id=id[:,::-1]
     id1=id[:,:atk]
     # print(id1)
