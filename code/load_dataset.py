@@ -23,8 +23,6 @@ def seed_randomly_split(df, ratio, split_seed, shape, type=None):
 
     # Convert to train/valid/test matrix
     idx = [int(ratio[0] * num_nonzeros), int(ratio[0] * num_nonzeros) + int(ratio[1] * num_nonzeros)]
-    # print('xxxxxxxxxxxxxxxxxxx', len(cols[idx[1]:]))
-    # print('###############',len(rating[idx[1]:]),'%%%%%',sum(rating[idx[1]:]))
 
     if type == 'implicit': 
         train_imp = pd.concat([rating[:idx[0]], rows[:idx[0]], cols[:idx[0]]], axis=1)
@@ -63,8 +61,8 @@ def load_dataset(data_name='yahooR3', type = 'explicit', unif_ratio = 0.05, seed
     random_df['rating'].loc[random_df['rating'] < threshold] = -1
     random_df['rating'].loc[random_df['rating'] >= threshold] = 1
     
-    m, n = max(user_df['uid']) + 1, max(user_df['iid']) + 1 #m是user的数量，n是item的数量
-    ratio = (unif_ratio, 0.05, 1-unif_ratio-0.05) #0.9:0.05:0.05就只是为了把unbias划分成train validate test
+    m, n = max(user_df['uid']) + 1, max(user_df['iid']) + 1 
+    ratio = (unif_ratio, 0.05, 1-unif_ratio-0.05) 
     unif_train, unif_validation, unif_test = seed_randomly_split(df=random_df, ratio=ratio,split_seed=seed, shape=(m, n), type=type)
     if type == 'list': 
         train_pos = sp.csr_matrix((user_df['position'], (user_df['uid'], user_df['iid'])), shape=(m, n), dtype='int64')
@@ -73,10 +71,6 @@ def load_dataset(data_name='yahooR3', type = 'explicit', unif_ratio = 0.05, seed
         train['position'] = sparse_mx_to_torch_sparse_tensor(train_pos).to(device)
         train['rating'] = sparse_mx_to_torch_sparse_tensor(train_rating).to(device)
     else: 
-        #这个是把biased data做成训练矩阵，因为biasd data全用来test了
-        # train = sp.csr_matrix((user_df['rating'], (user_df['uid'], user_df['iid'])), shape=(m, n), dtype='float32')
-        # train = sparse_mx_to_torch_sparse_tensor(train).to(device)
-        # time.sleep(3)
         bias_train, bias_validation, bias_test  = seed_randomly_split(df=user_df, ratio=(0.8, 0.1, 0.1),split_seed=seed, shape=(m, n), type=type)
 
     bias_train = sparse_mx_to_torch_sparse_tensor(bias_train).to(device)
@@ -118,8 +112,8 @@ def load_dataset2(data_name='yahooR3', type = 'explicit', unif_ratio = 0.05, see
     random_df['rating'].loc[random_df['rating'] < threshold] = -1
     random_df['rating'].loc[random_df['rating'] >= threshold] = 1
     
-    m, n = max(user_df['uid']) + 1, max(user_df['iid']) + 1 #m是user的数量，n是item的数量
-    ratio = (unif_ratio, 0.05, 1-unif_ratio-0.05) #0.9:0.05:0.05就只是为了把unbias划分成train validate test
+    m, n = max(user_df['uid']) + 1, max(user_df['iid']) + 1 
+    ratio = (unif_ratio, 0.05, 1-unif_ratio-0.05) 
     unif_train, unif_validation, unif_test = seed_randomly_split2(df=random_df, ratio=ratio,split_seed=seed, shape=(m, n), type=type, Drop=False)
     if type == 'list': 
         train_pos = sp.csr_matrix((user_df['position'], (user_df['uid'], user_df['iid'])), shape=(m, n), dtype='int64')
@@ -128,10 +122,6 @@ def load_dataset2(data_name='yahooR3', type = 'explicit', unif_ratio = 0.05, see
         train['position'] = sparse_mx_to_torch_sparse_tensor(train_pos).to(device)
         train['rating'] = sparse_mx_to_torch_sparse_tensor(train_rating).to(device)
     else: 
-        #这个是把biased data做成训练矩阵，因为biasd data全用来test了
-        # train = sp.csr_matrix((user_df['rating'], (user_df['uid'], user_df['iid'])), shape=(m, n), dtype='float32')
-        # train = sparse_mx_to_torch_sparse_tensor(train).to(device)
-        # time.sleep(3)
         bias_train, bias_validation, bias_test  = seed_randomly_split2(df=user_df, ratio=(0.8, 0.1, 0.1),split_seed=seed, shape=(m, n), type=type, Drop=True)
 
     bias_train = sparse_mx_to_torch_sparse_tensor(bias_train).to(device)
@@ -159,20 +149,12 @@ def seed_randomly_split2(df, ratio, split_seed, shape, type=None, Drop=True):
 
     # Convert to train/valid/test matrix
     idx = [int(ratio[0] * num_nonzeros), int(ratio[0] * num_nonzeros) + int(ratio[1] * num_nonzeros)]
-    # print('xxxxxxxxxxxxxxxxxxx', len(cols[idx[1]:]))
-    # print('###############',len(rating[idx[1]:]),'%%%%%',sum(rating[idx[1]:]))
 
     if type == 'implicit': 
         train_imp = pd.concat([rating[:idx[0]], rows[:idx[0]], cols[:idx[0]]], axis=1)
         if Drop:
             train_imp = train_imp.drop(train_imp[train_imp['rating'] < 1].index)
         train = sp.csr_matrix((train_imp['rating'], (train_imp['uid'], train_imp['iid'])), shape=shape, dtype='float32')
-        # val_imp = pd.concat([rating[idx[0]:idx[1]], rows[idx[0]:idx[1]], cols[idx[0]:idx[1]]], axis=1)
-        # val_imp = val_imp.drop(val_imp[val_imp['rating'] < 1].index)
-        # valid = sp.csr_matrix((val_imp['rating'], (val_imp['uid'], val_imp['iid'])), shape=shape, dtype='float32')
-        # test_imp = pd.concat([rating[idx[1]:], rows[idx[1]:], cols[idx[1]:]], axis=1)
-        # test_imp = test_imp.drop(test_imp[test_imp['rating'] < 1].index)
-        # test = sp.csr_matrix((test_imp['rating'], (test_imp['uid'], test_imp['iid'])), shape=shape, dtype='float32')
     else:
         train = sp.csr_matrix((rating[:idx[0]], (rows[:idx[0]], cols[:idx[0]])), shape=shape, dtype='float32')
     
