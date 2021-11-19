@@ -12,12 +12,6 @@ import math
 import time
 
 def calc(n,m,ttuser,ttitem,pre,ttrating,ut_dict,atk=5):
-    #n:参与test的userID的最大值，m:参与test的itemID的最大值
-    #ttuser：参与test的userID,ttitem：参与test的itemID
-    #pre：prediciton_rating
-    #ttrating：GrounTruth
-    #ut_dict：每一个user的feedback列表
-    #atk： 算ndcg和recall和pre 的at K
     user=ttuser.cpu().detach().numpy()
     item=ttitem.cpu().detach().numpy()
     pre=pre.cpu().detach().numpy()
@@ -27,7 +21,7 @@ def calc(n,m,ttuser,ttitem,pre,ttrating,ut_dict,atk=5):
     positem=item[posid]
     preall=np.ones((n,m))*(-1000000)
     preall[user,item]=pre
-    id=np.argsort(preall,axis=1,kind='quicksort',order=None)#跟topk类似，输出下标，每行都是得分从大到小排item的下标.行是user列是item
+    id=np.argsort(preall,axis=1,kind='quicksort',order=None)
     id=id[:,::-1]
     id1=id[:,:atk]
     # print(id1)
@@ -148,10 +142,10 @@ def ndcg_all(NDCG,atk=5):
     pre_hit=torch.topk(ndcg_ratings, atk)[1]
     NDCG_sum=0.
     for inter in range(len(ndcg_item)):
-        for r,iid in enumerate(pre_hit[inter]):#在topk的结果里找有没有命中的
+        for r,iid in enumerate(pre_hit[inter]):
             if iid.data.int()==ndcg_item[inter].data.int():
                 NDCG_oneinter=(1./(np.log2(r+1.+1.)))
-                break#只有一个正样本，最多命中一次
+                break
             else:
                 NDCG_oneinter=0
         NDCG_sum+=NDCG_oneinter
