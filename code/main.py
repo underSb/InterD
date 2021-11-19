@@ -73,15 +73,6 @@ def both_test(loader, model_name, testname, K = 5, dataset = "None"):
         test_results={}
         u_i_dict={}
         u_r_dict={}
-        # for batch_idx, (users, items, ratings) in enumerate(loader):
-        #     for i,u in enumerate(users):
-        #         try:
-        #             u_i_dict[u.item()].append(items[i].item())
-        #             u_r_dict[u.item()].append(ratings[i].item())
-        #         except:
-        #             u_i_dict[u.item()]=[items[i].item()]
-        #             u_r_dict[u.item()]=[ratings[i].item()]
-
         for batch_idx, (users, items, ratings) in enumerate(loader):
             for i,u in enumerate(users):
                 if ratings[i]>=1:
@@ -166,7 +157,6 @@ def both_test(loader, model_name, testname, K = 5, dataset = "None"):
             pos_mask = torch.where(ratings>=torch.ones_like(ratings), torch.arange(0,len(ratings)).float().to(device), 100*torch.ones_like(ratings))
             pos_ind = pos_mask[pos_mask != 100].long()
             users_ndcg = torch.index_select(users, 0, pos_ind)
-            #这里要用所有的train
             ratings_ndcg = model_name.allrank(users_ndcg, bias_train)
             ndcg_ratings = torch.cat((ndcg_ratings, ratings_ndcg))
             items = torch.index_select(items.float(), 0, pos_ind)
@@ -272,7 +262,6 @@ def step_test(loader, model_name, testname, epoch, dataset):
             pos_mask = torch.where(ratings>=torch.ones_like(ratings), torch.arange(0,len(ratings)).float().to(device), 100*torch.ones_like(ratings))
             pos_ind = pos_mask[pos_mask != 100].long()
             users_ndcg = torch.index_select(users, 0, pos_ind)
-            #这里要用所有的train
             ratings_ndcg = model_name.allrank(users_ndcg, bias_train)
             ndcg_ratings = torch.cat((ndcg_ratings, ratings_ndcg))
             items = torch.index_select(items.float(), 0, pos_ind)
@@ -375,7 +364,7 @@ def train_and_eval_CFF(bias_train, bias_validation, bias_test, unif_validation, 
         lossl_sum=0
         for u_batch_idx, users in enumerate(train_loader.User_loader): 
             for i_batch_idx, items in enumerate(train_loader.Item_loader): 
-                users_train, items_train, y_train = train_loader.get_batch(users, items)#取出所有这个batch的训练数据的UIpair和值
+                users_train, items_train, y_train = train_loader.get_batch(users, items)
                 if args.dataset == 'coat' or args.dataset == 'kuai':
                     y_train = torch.where(y_train<-1*torch.ones_like(y_train), -1*torch.ones_like(y_train), y_train)
                     y_train = torch.where(y_train >1*torch.ones_like(y_train), torch.ones_like(y_train), y_train)
@@ -439,7 +428,6 @@ def train_and_eval_CFF(bias_train, bias_validation, bias_test, unif_validation, 
 
                 training_loss += loss.item()
 
-        # fitlog.add_loss(training_loss, name="loss", step=epo)
 
         CFF_model.eval()
         with torch.no_grad():
